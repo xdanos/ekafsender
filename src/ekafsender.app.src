@@ -1,0 +1,18 @@
+{application, ekafsender,
+	[
+		{description, ""},
+		{vsn, "1"},
+		{registered, []},
+		{applications, [
+			kernel,
+			stdlib
+		]},
+		{mod, {ekafsender_app, []}},
+		{env, [
+			{filedir, "src"},
+			{partitions, 2},
+			{hosts, [{"localhost", 9092}]},
+			{intopic, <<"tst">>},
+			{outtopic, <<"out">>}
+		]}
+	]}.
