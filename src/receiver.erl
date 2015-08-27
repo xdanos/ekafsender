@@ -64,3 +64,5 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+%% {ok, Producer} = brod:start_link_producer([{"sc6", 9092}, {"sc7", 9092}]), brod:produce(Producer, <<"out">>, 0, <<>>, <<"message!">>).
