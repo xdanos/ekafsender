@@ -72,7 +72,7 @@ handle_call(send, _From, State) ->
 		io:format("Sent! ~p~n", [{Parition, Filename}])
 	end,
 	Start = erlang:monotonic_time(micro_seconds),
-	ec_plists:map(F, State#state.files_to_send, 4),
+	ec_plists:map(F, State#state.files_to_send, 2),
 	SendEnd = erlang:monotonic_time(micro_seconds),
 	io:format("The dataset was sent in: ~p milli_seconds~n", [erlang:convert_time_unit(SendEnd - Start, micro_seconds, milli_seconds)]),
 	io:format("Waiting for result (max. 10 minutes), forcing to stop~n", []),
