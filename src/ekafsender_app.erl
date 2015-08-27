@@ -14,7 +14,12 @@ start() ->
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    sender:start_link().
+    sender:start_link(),
+    receiver:start_link(),
+    io:format("Sending dataset...", []),
+    sender:send(),
+    {ok, self()}.
 
 stop(_State) ->
-    ok.
+    io:format("Stopping...~n", []),
+    init:stop().

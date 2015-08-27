@@ -12,7 +12,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, send/0]).
+-export([start_link/0, send/0, result_received/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -28,7 +28,8 @@
 	outtopic :: any(),
 	partitions :: integer(),
 	hosts :: list(),
-	defaultreadsize :: integer()
+	defaultreadsize :: integer(),
+	start :: integer()
 }).
 
 %%%===================================================================
@@ -40,6 +41,9 @@ start_link() ->
 
 send() ->
 	gen_server:call(?MODULE, send, infinity).
+
+result_received(End) ->
+	gen_server:cast(?MODULE, {result_received, End}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -63,15 +67,26 @@ init([]) ->
 
 handle_call(send, _From, State) ->
 	F = fun({Parition, Filename}) ->
-		io:format("Producing ~p~n", [{Parition, Filename}]),
+		io:format("Sending to Kafka: ~p~n", [{Parition, Filename}]),
 		fileop:send_file(Filename, State#state.hosts, {State#state.intopic, Parition, State#state.defaultreadsize}),
-		io:format("Produced ~p~n", [{Parition, Filename}])
+		io:format("Sent! ~p~n", [{Parition, Filename}])
 	end,
+	Start = erlang:monotonic_time(micro_seconds),
 	ec_plists:map(F, State#state.files_to_send, 4),
-	{reply, ok, State}.
+	SendEnd = erlang:monotonic_time(micro_seconds),
+	io:format("The dataset was sent in: ~p milli_seconds~n", [erlang:convert_time_unit(SendEnd - Start, micro_seconds, milli_seconds)]),
+	io:format("Waiting for result (max. 10 minutes), forcing to stop~n", []),
+	{reply, ok, State#state{start = Start}, erlang:convert_time_unit(600, seconds, milli_seconds)}.
 
-handle_cast(_Request, State) ->
+handle_cast({result_received, End}, State) ->
+	io:format("This run took: ~p milli_seconds~n", [erlang:convert_time_unit(End - State#state.start, micro_seconds, milli_seconds)]),
+	application:stop(ekafsender),
 	{noreply, State}.
+
+handle_info(timeout, State) ->
+	io:format("The output took more than 10 minutes~n", []),
+	application:stop(ekafsender),
+	{noreply, State};
 
 handle_info(_Info, State) ->
 	{noreply, State}.
