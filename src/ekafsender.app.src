@@ -13,6 +13,7 @@
 			{partitions, 100},
 			{hosts, [{"sc6", 9092}, {"sc7", 9092}]},
 			{intopic, <<"tst">>},
-			{outtopic, <<"out">>}
+			{outtopic, <<"out">>},
+			{defaultreadsize, 2000}
 		]}
 	]}.
