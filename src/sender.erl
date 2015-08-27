@@ -58,7 +58,7 @@ init([]) ->
 	First2 = [filename:join([Filedir, File]) || File <- First],
 	Zipped = lists:zip(lists:seq(0, Min - 1), First2),
 	io:format("There are ~p files and ~p partitions...~n", [length(Files), Partitions]),
-	io:format("The files are mapped to partitions as follows: ~p~n", [Zipped]),
+	io:format("The files are mapped to partitions as follows: ~600p~n", [Zipped]),
 	{ok, #state{files_to_send = Zipped, intopic = InTopic, outtopic = OutTopic, partitions = Partitions, hosts = Hosts, defaultreadsize = DefaultReadSize}}.
 
 handle_call(send, _From, State) ->
