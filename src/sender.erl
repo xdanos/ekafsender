@@ -12,7 +12,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, start_producing/0]).
+-export([start_link/0, send/0]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -38,8 +38,8 @@
 start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-start_producing() ->
-	gen_server:call(?MODULE, start_producing, infinity).
+send() ->
+	gen_server:call(?MODULE, send, infinity).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -61,10 +61,10 @@ init([]) ->
 	io:format("The files are mapped to partitions as follows: ~p~n", [Zipped]),
 	{ok, #state{files_to_send = Zipped, intopic = InTopic, outtopic = OutTopic, partitions = Partitions, hosts = Hosts, defaultreadsize = DefaultReadSize}}.
 
-handle_call(start_producing, _From, State) ->
+handle_call(send, _From, State) ->
 	F = fun({Parition, Filename}) ->
 		io:format("Producing ~p~n", [{Parition, Filename}]),
-		ekafsender:send_file(Filename, State#state.hosts, {State#state.intopic, Parition, State#state.defaultreadsize}),
+		fileop:send_file(Filename, State#state.hosts, {State#state.intopic, Parition, State#state.defaultreadsize}),
 		io:format("Produced ~p~n", [{Parition, Filename}])
 	end,
 	ec_plists:map(F, State#state.files_to_send, 4),

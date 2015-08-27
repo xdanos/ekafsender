@@ -1,4 +1,4 @@
--module(ekafsender).
+-module(fileop).
 
 %% ekafsender: ekafsender library's entry point.
 

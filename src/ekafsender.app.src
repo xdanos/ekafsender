@@ -10,10 +10,10 @@
 		{mod, {ekafsender_app, []}},
 		{env, [
 			{filedir, "priv/dataset"},
-			{partitions, 100},
-			{hosts, [{"sc6", 9092}, {"sc7", 9092}]},
-			{intopic, <<"tst">>},
+			{partitions, 1},
+			{hosts, [{"localhost", 9092}]},
+			{intopic, <<"dan">>},
 			{outtopic, <<"out">>},
-			{defaultreadsize, 2000}
+			{defaultreadsize, 1000}
 		]}
 	]}.
