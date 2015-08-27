@@ -14,7 +14,7 @@ start() ->
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    sc:start_link().
+    sender:start_link().
 
 stop(_State) ->
     ok.

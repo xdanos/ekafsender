@@ -13,6 +13,7 @@
 			{partitions, 2},
 			{hosts, [{"localhost", 9092}]},
 			{intopic, <<"tst">>},
-			{outtopic, <<"out">>}
+			{outtopic, <<"out">>},
+			{processes, 8}
 		]}
 	]}.

@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 27. VIII 2015 9:53
 %%%-------------------------------------------------------------------
--module(sc).
+-module(sender).
 -author("xtovarn").
 
 -behaviour(gen_server).
@@ -27,7 +27,8 @@
 	intopic :: any(),
 	outtopic :: any(),
 	partitions :: integer(),
-	hosts :: list()
+	hosts :: list(),
+	processes :: integer()
 }).
 
 %%%===================================================================
@@ -50,18 +51,23 @@ init([]) ->
 	{ok, InTopic} = application:get_env(intopic),
 	{ok, OutTopic} = application:get_env(outtopic),
 	{ok, Hosts} = application:get_env(hosts),
+	{ok, Processes} = application:get_env(processes),
 	{ok, Files} = file:list_dir(Filedir),
 	Min = min(Partitions, length(Files)),
 	{First, _} = lists:split(Min, Files),
-	Zipped = lists:zip(lists:seq(0, Min - 1), First),
+	First2 = [filename:join([Filedir, File]) || File <- First],
+	Zipped = lists:zip(lists:seq(0, Min - 1), First2),
+	io:format("There are ~p files and ~p partitions...~n", [length(Files), Partitions]),
 	io:format("The files are mapped to partitions as follows: ~p~n", [Zipped]),
-	{ok, #state{files_to_send = Zipped, intopic = InTopic, outtopic = OutTopic, partitions = Partitions, hosts = Hosts}}.
+	{ok, #state{files_to_send = Zipped, intopic = InTopic, outtopic = OutTopic, partitions = Partitions, hosts = Hosts, processes = Processes}}.
 
 handle_call(start_producing, _From, State) ->
 	F = fun({Parition, Filename}) ->
-			ekafsender:send_file(Filename, State#state.hosts, {State#state.intopic, Parition})
-		end,
-	ec_plists:foreach(F, State#state.files_to_send, [{processes, 8}]),
+		io:format("Producing ~p~n", [{Parition, Filename}]),
+		ekafsender:send_file(Filename, State#state.hosts, {State#state.intopic, Parition}),
+		io:format("Produced ~p~n", [{Parition, Filename}])
+	end,
+	ec_plists:foreach(F, State#state.files_to_send, [{processes, State#state.processes}]),
 	{reply, ok, State}.
 
 handle_cast(_Request, State) ->
