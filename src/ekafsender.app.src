@@ -14,6 +14,6 @@
 			{hosts, [{"sc6", 9092}, {"sc7", 9092}]},
 			{intopic, <<"tst">>},
 			{outtopic, <<"out">>},
-			{defaultreadsize, 2000}
+			{defaultreadsize, 500}
 		]}
 	]}.
