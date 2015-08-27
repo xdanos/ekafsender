@@ -22,7 +22,7 @@ for_each_line(ReadDevice, Pid, BatchCounter, Buffer, {Topic, Partition, DefaultR
 					brod:produce(Pid, Topic, Partition, lists:reverse(Buffer)),
 					ok
 			end,
-			brod_producer:stop(Pid),
+			brod:stop_producer(Pid),
 			file:close(ReadDevice);
 		{ok, Line} ->
 			for_each_line(ReadDevice, Pid, BatchCounter - 1, [{<<>>, Line}| Buffer], {Topic, Partition, DefaultReadSize})
