@@ -8,9 +8,5 @@
 			stdlib
 		]},
 		{mod, {ekafsender_app, []}},
-		{env, [
-			{filedir, "priv/dataset"},
-			{hosts, [{"sc6", 9092}, {"sc7", 9092}]},
-			{defaultreadsize, 500}
-		]}
+		{env, []}
 	]}.
