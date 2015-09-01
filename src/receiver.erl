@@ -22,8 +22,6 @@
 	terminate/2,
 	code_change/3]).
 
--include_lib("brod/include/brod.hrl").
-
 -record(state, {pid :: pid()}).
 
 %%%===================================================================
@@ -37,11 +35,9 @@ start_link() ->
 %%%===================================================================
 
 init([]) ->
-	{ok, OutTopic} = application:get_env(outtopic),
-	{ok, Hosts} = application:get_env(hosts),
-	{ok, Pid} = brod:start_consumer(Hosts, OutTopic, 0),
-	ok = brod:consume(Pid, self(), -1, 1000, 1, 100000),
-	{ok, #state{pid = Pid}}.
+	{ok, _OutTopic} = application:get_env(outtopic),
+	{ok, _Hosts} = application:get_env(hosts),
+	{ok, #state{pid = somesocket}}.
 
 handle_call(_Request, _From, State) ->
 	{reply, ok, State}.
@@ -49,7 +45,7 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
 	{noreply, State}.
 
-handle_info(#message_set{messages = Msgs}, State) ->
+handle_info(Msgs, State) ->
 	End = erlang:monotonic_time(micro_seconds),
 	io:format("Result recieved: ~p~n", [Msgs]),
 	sender:result_received(End),
