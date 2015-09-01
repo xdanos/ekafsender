@@ -24,10 +24,6 @@
 
 -record(state, {
 	files_to_send :: list(),
-	intopic :: any(),
-	outtopic :: any(),
-	partitions :: integer(),
-	hosts :: list(),
 	defaultreadsize :: integer(),
 	start :: integer()
 }).
@@ -51,25 +47,22 @@ result_received(End) ->
 
 init([]) ->
 	{ok, Filedir} = application:get_env(filedir),
-	{ok, Partitions} = application:get_env(partitions),
-	{ok, InTopic} = application:get_env(intopic),
-	{ok, OutTopic} = application:get_env(outtopic),
 	{ok, Hosts} = application:get_env(hosts),
 	{ok, DefaultReadSize} = application:get_env(defaultreadsize),
 	{ok, Files} = file:list_dir(Filedir),
-	Min = min(Partitions, length(Files)),
-	{First, _} = lists:split(Min, Files),
-	First2 = [filename:join([Filedir, File]) || File <- First],
-	Zipped = lists:zip(lists:seq(0, Min - 1), First2),
-	io:format("There are ~p files and ~p partitions...~n", [length(Files), Partitions]),
-	io:format("The files are mapped to partitions as follows: ~600p~n", [Zipped]),
-	{ok, #state{files_to_send = Zipped, intopic = InTopic, outtopic = OutTopic, partitions = Partitions, hosts = Hosts, defaultreadsize = DefaultReadSize}}.
+	First2 = [filename:join([Filedir, File]) || File <- Files],
+	HostsNum = length(Hosts),
+	HostsSeq = [lists:nth((I rem HostsNum) + 1, Hosts) || I <- lists:seq(1, length(First2))],
+	Zipped = lists:zip(HostsSeq, First2),
+	io:format("There are ~p files and ~p hosts...~n", [length(Files), length(Hosts)]),
+	io:format("The files are mapped to hosts as follows: ~600p~n", [Zipped]),
+	{ok, #state{files_to_send = Zipped, defaultreadsize = DefaultReadSize}}.
 
 handle_call(send, _From, State) ->
-	F = fun({Parition, Filename}) ->
-		io:format("Sending to Kafka: ~p~n", [{Parition, Filename}]),
-		fileop:send_file(Filename, State#state.hosts, {State#state.intopic, Parition, State#state.defaultreadsize}),
-		io:format("Sent! ~p~n", [{Parition, Filename}])
+	F = fun({Host, Filename}) ->
+		io:format("Sending to TCP: ~p~n", [{Host, Filename}]),
+		fileop:send_file(Filename, Host, State#state.defaultreadsize),
+		io:format("Sent! ~p~n", [{Host, Filename}])
 	end,
 	Start = erlang:monotonic_time(micro_seconds),
 	ec_plists:map(F, State#state.files_to_send, 1),

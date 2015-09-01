@@ -4,28 +4,26 @@
 
 -export([send_file/3]).
 
-send_file(Filename, Hosts, {Topic, Partition, DefaultReadSize}) ->
+send_file(Filename, _Host = {Address, Port}, DefaultReadSize) ->
 	{ok, ReadDevice} = file:open(Filename, [raw, read_ahead, read, binary]),
-	{ok, Pid} = brod:start_link_producer(Hosts, 1, 10000),
-	ok = for_each_line(ReadDevice, Pid, DefaultReadSize, [], {Topic, Partition, DefaultReadSize}).
+	{ok, Socket} = gen_tcp:connect(Address, Port, [], 5000),
+	ok = for_each_line(ReadDevice, Socket, DefaultReadSize, [], DefaultReadSize).
 
-for_each_line(ReadDevice, Pid, 0, Buffer, {Topic, Partition, DefaultReadSize}) ->
-	brod:produce(Pid, Topic, Partition, lists:reverse(Buffer)),
-	receive {{_, _}, ack} -> ok end,
-	for_each_line(ReadDevice, Pid, DefaultReadSize, [], {Topic, Partition, DefaultReadSize});
-for_each_line(ReadDevice, Pid, BatchCounter, Buffer, {Topic, Partition, DefaultReadSize}) ->
+for_each_line(ReadDevice, Socket, 0, Buffer, DefaultReadSize) ->
+	gen_tcp:send(Socket, lists:reverse(Buffer)),
+	for_each_line(ReadDevice, Socket, DefaultReadSize, [], DefaultReadSize);
+for_each_line(ReadDevice, Socket, BatchCounter, Buffer, DefaultReadSize) ->
 	case file:read_line(ReadDevice) of
 		eof ->
 			case length(Buffer) of
 				0 ->
 					ok;
 				_ ->
-					brod:produce(Pid, Topic, Partition, lists:reverse(Buffer)),
-					receive {{_, _}, ack} -> ok end,
+					gen_tcp:send(Socket, lists:reverse(Buffer)),
 					ok
 			end,
-			brod:stop_producer(Pid),
+			gen_tcp:close(Socket),
 			file:close(ReadDevice);
 		{ok, Line} ->
-			for_each_line(ReadDevice, Pid, BatchCounter - 1, [{<<>>, Line}| Buffer], {Topic, Partition, DefaultReadSize})
+			for_each_line(ReadDevice, Socket, BatchCounter - 1, [Line | Buffer], DefaultReadSize)
 	end.
