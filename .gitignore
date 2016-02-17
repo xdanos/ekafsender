@@ -2,4 +2,3 @@
 .rebar/
 deps/
 ebin/
-priv/
