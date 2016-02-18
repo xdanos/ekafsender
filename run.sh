@@ -1,2 +1,2 @@
 #!/bin/bash
-erl -name node -s ekafsender_app -pa ebin/ deps/brod/ebin/ deps/erlware_commons/ebin/ -noshell +A 128
+erl -sname node -s ekafsender_app -pa ebin/ deps/brod/ebin/ deps/erlware_commons/ebin/ -noshell +A 128
